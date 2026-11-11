@@ -64,22 +64,17 @@ export const lessons = {
   time: {
     title: 'The hour has not yet come.',
     description:
-      'Use time of our lord to create a moment from a timestamp with a timezone. Compare moments, or subtract them to count the seconds between them. Empty parentheses capture the current time.',
+      'Capture the current moment with time of our lord(), then compare it with Christmas 2026 in UTC. The countdown changes each run; once Christmas arrives, the else branch runs instead.',
     concepts: [
       ['time of our lord()', 'Capture the current moment'],
-      ['<', 'Check which moment comes first'],
-      ['christmas - vigil', 'Find the elapsed seconds'],
+      ['else:', 'Run when the condition is false'],
+      ['christmas - now', 'Find the remaining seconds'],
     ],
     challenge:
-      'Move the vigil to 22:00:00Z and run again. Then add praise time of our lord() to see the current moment in UTC.',
+      'Change the Christmas timestamp to a date in the past to try the else branch. Add praise now to see the moment captured when you run the script.',
     source:
-      'genesis:\n    let there be vigil = time of our lord("2026-12-24T23:00:00Z")\n    let there be christmas = time of our lord("2026-12-25T00:00:00Z")\n\n    if vigil < christmas:\n        praise "The hour has not yet come"\n    amen\n\n    praise "Seconds until Christmas"\n    praise christmas - vigil\n    praise christmas\namen\n',
-    output: [
-      'The hour has not yet come',
-      'Seconds until Christmas',
-      '3600',
-      '2026-12-25T00:00:00Z',
-    ],
+      'genesis:\n    let there be now = time of our lord()\n    let there be christmas = time of our lord("2026-12-25T00:00:00Z")\n\n    if now < christmas:\n        praise "The hour has not yet come - seconds until Christmas:"\n        praise christmas - now\n    else:\n        praise "Merry Christmas!"\n    amen\n\namen\n',
+    output: null,
     next: null,
   },
   custom: {

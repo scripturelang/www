@@ -16,6 +16,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { bundleHash, readBundle } from './runtime-bundle.mjs';
+import { lessons } from '../web/lessons.js';
 
 const website = fileURLToPath(new URL('../', import.meta.url));
 const checkedIn = JSON.parse(
@@ -88,6 +89,32 @@ try {
     statSync(join(pkg, first, 'scripturec_bg.wasm')).mtimeMs,
     binaryTime,
   );
+
+  // Changing a dynamic lesson's prose must not block runtime installation.
+  const editedLessons = {
+    ...lessons,
+    time: {
+      ...lessons.time,
+      source: lessons.time.source.replace(
+        /praise "[^"]*"/g,
+        'praise "Edited lesson message"',
+      ),
+    },
+  };
+  const lessonPath = join(site, 'web/lessons.js');
+  const writeLessons = () =>
+    writeFileSync(
+      lessonPath,
+      `export const lessons = ${JSON.stringify(editedLessons)};\n`,
+    );
+  writeLessons();
+  assert.equal(succeeds(source), first);
+  // But a runtime error in the otherwise-unselected branch still blocks updates.
+  editedLessons.time.source =
+    'genesis: if time of our lord() < time of our lord("2026-12-25T00:00:00Z"): praise "before" else: praise missing amen amen';
+  writeLessons();
+  fails(/undefined name/, source);
+  cpSync(join(website, 'web/lessons.js'), lessonPath);
 
   mkdirSync(join(pkg, '.update-lock'));
   const lockedManifest = readFileSync(manifest, 'utf8');

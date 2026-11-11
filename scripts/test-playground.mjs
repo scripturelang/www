@@ -310,10 +310,7 @@ assert.equal(
 timeLesson.click('next-lesson');
 assert.equal(timeLesson.element('example').value, 'time');
 assert.equal(timeLesson.element('source').value, lessons.time.source);
-assert.equal(
-  timeLesson.element('expected-output').textContent,
-  lessons.time.output.join('\n'),
-);
+assert.equal(timeLesson.element('expected-details').hidden, true);
 let prevented = false;
 const key = (value, extra = {}) =>
   next.element('source').handlers.keydown({

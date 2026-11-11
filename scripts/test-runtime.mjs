@@ -30,6 +30,43 @@ for (const [name, lesson] of Object.entries(lessons)) {
   assert.equal(report.error, null, `${name}: ${report.error}`);
   if (lesson.output) assert.deepEqual(report.output, lesson.output, name);
 }
+// Keep runtime assertions independent of editable lesson wording and output.
+// Exercise the lesson at the same fixed instants to catch errors in either branch.
+const timeProbe = `genesis:
+    let there be now = time of our lord()
+    let there be deadline = time of our lord("2026-12-25T00:00:00Z")
+    praise now < deadline
+    if now < deadline:
+        praise deadline - now
+    else:
+        praise now - deadline
+    amen
+amen`;
+const originalClock = Date.now;
+try {
+  for (const [instant, expected] of [
+    ['2026-12-24T23:00:00Z', ['true', '3600']],
+    ['2026-12-25T00:00:00Z', ['false', '0']],
+    ['2026-12-26T00:00:00Z', ['false', '86400']],
+  ]) {
+    Date.now = () => Date.parse(instant);
+    const lessonReport = JSON.parse(await run_script(lessons.time.source));
+    assert.equal(
+      lessonReport.error,
+      null,
+      `time lesson at ${instant}: ${lessonReport.error}`,
+    );
+    const report = JSON.parse(await run_script(timeProbe));
+    assert.equal(
+      report.error,
+      null,
+      `time runtime at ${instant}: ${report.error}`,
+    );
+    assert.deepEqual(report.output, expected);
+  }
+} finally {
+  Date.now = originalClock;
+}
 const failure = JSON.parse(
   await run_script('genesis: praise "before"; confess "oops" amen'),
 );
