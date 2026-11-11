@@ -16,6 +16,21 @@ make serve
 Running `make` also starts the server. Use `make serve PORT=9090` to choose a
 different port. Stop the server with Ctrl-C.
 
+The playground follows the system's light or dark appearance automatically.
+Both palettes are defined with CSS custom properties in `web/playground.css`.
+
+## Source formatting
+
+HTML, CSS, and JavaScript use Prettier with two-space indentation and an
+80-column target. Format the maintained sources with:
+
+```sh
+npx prettier@3.6.2 --write 'web/*.{html,css,js}' 'scripts/*.mjs'
+```
+
+Use `--check` instead of `--write` to verify formatting. The generated runtime in
+`web/pkg/` is excluded so it stays identical to the compiler's output.
+
 ## Updating the WebAssembly runtime
 
 Build in `scripturec`, then explicitly copy the complete generated bundle here.
