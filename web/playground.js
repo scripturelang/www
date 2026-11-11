@@ -1,7 +1,10 @@
 import { lessons } from './lessons.js';
 
 const byId = (id) => document.getElementById(id);
-const source = byId('source');
+// Keep the plain textarea usable if the highlighting library fails to load.
+const source = byId('source').setRangeText
+  ? byId('source')
+  : byId('source-textarea');
 const lineNumbers = byId('line-numbers');
 const draftStatus = byId('draft-status');
 const output = byId('output');

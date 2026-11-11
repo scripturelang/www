@@ -1,2 +1,4 @@
 # Keep the generated WebAssembly bundle identical to the compiler output.
 web/pkg/
+# Preserve upstream editor libraries verbatim.
+web/vendor/

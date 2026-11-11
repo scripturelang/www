@@ -13,6 +13,7 @@ function mount({
   storage = new Map(),
   mobile = false,
   storageFails = false,
+  editorAvailable = true,
 } = {}) {
   const metrics = { storageWrites: 0, gutterWrites: 0 };
   const documentHandlers = {};
@@ -129,6 +130,7 @@ function mount({
     },
     clearTimeout: (id) => timers.delete(id),
   };
+  if (!editorAvailable) delete element('source').setRangeText;
   vm.runInNewContext(controller, context);
   const click = (id) => element(id).handlers.click();
   const edit = (text) => {
@@ -162,6 +164,11 @@ function mount({
 }
 
 const ui = mount({ mobile: true });
+const fallback = mount({ editorAvailable: false });
+assert.equal(fallback.element('source-textarea').value, lessons.hello.source);
+fallback.click('run');
+assert.equal(fallback.workers[0].data.source, lessons.hello.source);
+fallback.click('stop');
 const { element, workers, click } = ui;
 assert.equal(element('source').value, lessons.hello.source);
 assert.equal(element('lesson-title').textContent, lessons.hello.title);

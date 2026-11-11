@@ -24,3 +24,4 @@ jobs:
       - run: node scripts/test-runtime-loader.mjs
       - run: node scripts/test-update-runtime.mjs
       - run: node scripts/test-playground.mjs
+      - run: node scripts/test-editor.mjs

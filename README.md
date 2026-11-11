@@ -23,6 +23,20 @@ to pick up changes to the server command.
 The playground follows the system's light or dark appearance automatically.
 Both palettes are defined with CSS custom properties in `web/playground.css`.
 
+## Code editor
+
+The editor uses code-input 2.9.0 and Prism 1.30.0, bundled locally under
+`web/vendor/` with their licenses. No new build step or CDN connection is needed.
+`web/editor.js` defines a small set of highlighting rules for Scripture's tokens;
+it does not parse or validate programs. The Rust interpreter remains responsible
+for the language grammar and diagnostics.
+
+When adding tokens to the language, update those color rules as needed. Colors
+for both light and dark appearances live in `web/playground.css`. Draft saving,
+Reset example, Tab indentation, Escape then Tab, and error navigation retain the
+existing playground behavior. If the editor libraries fail to load, the plain
+textarea remains usable.
+
 ## Source formatting
 
 HTML, CSS, and JavaScript use Prettier with two-space indentation and an
@@ -85,4 +99,5 @@ node scripts/test-runtime.mjs
 node scripts/test-runtime-loader.mjs
 node scripts/test-update-runtime.mjs
 node scripts/test-playground.mjs
+node scripts/test-editor.mjs
 ```

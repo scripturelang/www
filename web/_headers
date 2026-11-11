@@ -7,6 +7,8 @@
   Cache-Control: no-cache
 /playground.css
   Cache-Control: no-cache
+/editor.js
+  Cache-Control: no-cache
 /lessons.js
   Cache-Control: no-cache
 /worker.js

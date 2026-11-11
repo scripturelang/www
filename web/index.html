@@ -45,6 +45,7 @@
     />
     <link rel="icon" href="./favicon.ico" sizes="16x16 32x32 48x48" />
     <link rel="icon" href="./logo.svg" type="image/svg+xml" sizes="any" />
+    <link rel="stylesheet" href="./vendor/code-input-2.9.0/code-input.css" />
     <link rel="stylesheet" href="./playground.css" />
   </head>
   <body>
@@ -165,7 +166,7 @@
           aria-label="Script editor"
         >
           <div class="pane-heading">
-            <label for="source">Code</label>
+            <label id="source-label" for="source-textarea">Code</label>
             <span id="draft-status">Example ready</span>
             <button id="reset" class="text-button" type="button">
               Reset example
@@ -173,15 +174,30 @@
           </div>
           <div class="code-editor">
             <pre id="line-numbers" aria-hidden="true">1</pre>
-            <textarea
+            <code-input
               id="source"
+              language="scripture"
+              template="scripture"
+              aria-labelledby="source-label"
               spellcheck="false"
               autocapitalize="off"
               autocomplete="off"
               autocorrect="off"
               aria-describedby="editor-hint"
               maxlength="131072"
-            ></textarea>
+            >
+              <textarea
+                id="source-textarea"
+                data-code-input-fallback
+                aria-labelledby="source-label"
+                aria-describedby="editor-hint"
+                spellcheck="false"
+                autocapitalize="off"
+                autocomplete="off"
+                autocorrect="off"
+                maxlength="131072"
+              ></textarea>
+            </code-input>
           </div>
           <p id="editor-hint" class="pane-footnote">
             Tab indents. Press Esc, then Tab to leave the editor.
@@ -318,6 +334,9 @@ amen</pre
         This playground needs JavaScript and WebAssembly enabled.
       </noscript>
     </main>
+    <script src="./vendor/prism-1.30.0/prism-core.js" data-manual></script>
+    <script src="./vendor/code-input-2.9.0/code-input.js"></script>
+    <script src="./editor.js"></script>
     <script src="./playground.js?loader=manifest-v1" type="module"></script>
   </body>
 </html>
