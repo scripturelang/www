@@ -25,11 +25,8 @@ HTML, CSS, and JavaScript use Prettier with two-space indentation and an
 80-column target. Format the maintained sources with:
 
 ```sh
-npx prettier@3.6.2 --write 'web/*.{html,css,js}' 'scripts/*.mjs'
+make pretty
 ```
-
-Use `--check` instead of `--write` to verify formatting. The generated runtime in
-`web/pkg/` is excluded so it stays identical to the compiler's output.
 
 ## Updating the WebAssembly runtime
 
@@ -49,18 +46,3 @@ and `package.json` together; they are a matched bundle. Review and commit the up
 this copy automatically, and website builds never fetch or compile the runtime.
 The compiler's example programs remain in `scripturec`; the website owns its
 guided examples in `web/lessons.js`.
-
-## Optional development checks
-
-The existing checks use Node.js 22+ without npm or third-party packages:
-
-```sh
-node scripts/test-runtime.mjs
-node scripts/test-playground.mjs
-```
-
-They are optional locally and also run in GitHub Actions, independently of
-hosting. They are not a build or deployment step. The runtime checks execute
-every guided lesson against the bundled Wasm and verify errors, partial output,
-and asynchronous execution. The UI checks cover draft recovery, lesson navigation,
-mobile views, keyboard handling, diagnostics, and worker lifecycle.
