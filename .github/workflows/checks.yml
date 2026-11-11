@@ -21,4 +21,6 @@ jobs:
           node-version: 24.22.1
           package-manager-cache: false
       - run: node scripts/test-runtime.mjs
+      - run: node scripts/test-runtime-loader.mjs
+      - run: node scripts/test-update-runtime.mjs
       - run: node scripts/test-playground.mjs

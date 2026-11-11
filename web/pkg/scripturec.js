@@ -1,5 +1,6 @@
 /* @ts-self-types="./scripturec.d.ts" */
-import * as import1 from "./snippets/scripturec-56451a7a9ecfa12f/inline0.js"
+import * as import1 from "./snippets/scripturec-56451a7a9ecfa12f/inline1.js"
+import * as import2 from "./snippets/scripturec-56451a7a9ecfa12f/inline0.js"
 
 
 /**
@@ -100,7 +101,7 @@ function __wbg_get_imports() {
             return ret;
         },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 80, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 81, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__hc507b1361f43d378);
             return ret;
         },
@@ -121,7 +122,8 @@ function __wbg_get_imports() {
     return {
         __proto__: null,
         "./scripturec_bg.js": import0,
-        "./snippets/scripturec-56451a7a9ecfa12f/inline0.js": import1,
+        "./snippets/scripturec-56451a7a9ecfa12f/inline1.js": import1,
+        "./snippets/scripturec-56451a7a9ecfa12f/inline0.js": import2,
     };
 }
 

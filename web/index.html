@@ -76,6 +76,7 @@
             <option value="values">Variables &amp; numbers</option>
             <option value="functions">Functions</option>
             <option value="prophecy">A prophecy</option>
+            <option value="time">Time of our lord</option>
             <option value="custom">Your own script</option>
           </select>
           <button id="load" type="button">Open example</button>
@@ -298,7 +299,7 @@ amen</pre
           Use a new line or
           <code>;</code>
           between statements. Strings use double quotes. Arithmetic works on
-          numbers;
+          numbers, and subtracting two times gives elapsed seconds;
           <code>+</code>
           does not join strings. Comments and string escapes are not supported
           yet.
@@ -317,6 +318,6 @@ amen</pre
         This playground needs JavaScript and WebAssembly enabled.
       </noscript>
     </main>
-    <script src="./playground.js" type="module"></script>
+    <script src="./playground.js?loader=manifest-v1" type="module"></script>
   </body>
 </html>

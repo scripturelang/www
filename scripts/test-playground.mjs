@@ -83,7 +83,7 @@ function mount({
   }
   class Worker {
     constructor(url, options) {
-      assert.equal(url, './worker.js');
+      assert.equal(url, './worker.js?loader=manifest-v1');
       assert.equal(options.type, 'module');
       workers.push(this);
     }
@@ -296,6 +296,24 @@ next.click('view-output');
 assert.equal(next.element('view-output').attributes['aria-pressed'], 'true');
 next.click('view-source');
 assert.equal(next.element('view-output').attributes['aria-pressed'], 'false');
+const timeLesson = mount();
+timeLesson.element('example').value = 'prophecy';
+timeLesson.click('load');
+timeLesson.click('run');
+timeLesson.workers[0].onmessage({
+  data: { output: lessons.prophecy.output, error: null },
+});
+assert.equal(
+  timeLesson.element('next-lesson').textContent,
+  'Next: time of our lord',
+);
+timeLesson.click('next-lesson');
+assert.equal(timeLesson.element('example').value, 'time');
+assert.equal(timeLesson.element('source').value, lessons.time.source);
+assert.equal(
+  timeLesson.element('expected-output').textContent,
+  lessons.time.output.join('\n'),
+);
 let prevented = false;
 const key = (value, extra = {}) =>
   next.element('source').handlers.keydown({
@@ -467,11 +485,12 @@ let resume;
 const workerSelf = { postMessage: (report) => reports.push(report) };
 const workerContext = {
   self: workerSelf,
-  init: async () => {},
-  run_script: () =>
-    new Promise((resolve) => {
-      resume = resolve;
-    }),
+  loadRuntime: async () => ({
+    run_script: () =>
+      new Promise((resolve) => {
+        resume = resolve;
+      }),
+  }),
 };
 const workerSource = readFileSync(
   new URL('../web/worker.js', import.meta.url),
@@ -488,6 +507,14 @@ await pendingReport;
 assert.equal(
   JSON.stringify(reports),
   JSON.stringify([{ output: ['after'], error: null }]),
+);
+workerContext.loadRuntime = async () => {
+  throw new Error('Could not load the interpreter manifest (HTTP 404).');
+};
+await workerSelf.onmessage({ data: { source: lessons.time.source } });
+assert.match(
+  reports.at(-1).error,
+  /Could not load the interpreter manifest \(HTTP 404\)/,
 );
 console.log(
   'Guided lessons, draft recovery, mobile views, keyboard escape, diagnostics, worker lifecycle, and async reports passed.',

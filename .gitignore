@@ -1,4 +1,5 @@
 # The reviewed runtime in web/pkg/ is intentionally versioned.
+web/pkg/.update-*/
 
 # Local credentials and machine-specific files.
 .env

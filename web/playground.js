@@ -271,7 +271,10 @@ function run() {
   saveDraft();
   setView('output', true);
   try {
-    const worker = new Worker('./worker.js', { type: 'module' });
+    // Give the manifest loader a fresh URL for browsers with the legacy worker cached.
+    const worker = new Worker('./worker.js?loader=manifest-v1', {
+      type: 'module',
+    });
     activeWorker = worker;
     worker.onmessage = ({ data }) => {
       if (activeWorker !== worker) return;
@@ -291,7 +294,7 @@ function run() {
         const next = lessons[activeLesson].next;
         if (next && source.value === executedSource) {
           byId('next-lesson').textContent =
-            `Next: ${next === 'values' ? 'variables & numbers' : next === 'functions' ? 'functions' : 'a prophecy'}`;
+            `Next: ${next === 'values' ? 'variables & numbers' : next === 'functions' ? 'functions' : next === 'time' ? 'time of our lord' : 'a prophecy'}`;
           byId('next-lesson').hidden = false;
         }
       }

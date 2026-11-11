@@ -59,6 +59,27 @@ export const lessons = {
     source:
       'let there be count = 0\n\nprophecy (count == 2):\n    praise "It happened!"\namen\n\ngenesis:\n    count = 1\n    count = 2\namen\n',
     output: ['It happened!'],
+    next: 'time',
+  },
+  time: {
+    title: 'The hour has not yet come.',
+    description:
+      'Use time of our lord to create a moment from a timestamp with a timezone. Compare moments, or subtract them to count the seconds between them. Empty parentheses capture the current time.',
+    concepts: [
+      ['time of our lord()', 'Capture the current moment'],
+      ['<', 'Check which moment comes first'],
+      ['christmas - vigil', 'Find the elapsed seconds'],
+    ],
+    challenge:
+      'Move the vigil to 22:00:00Z and run again. Then add praise time of our lord() to see the current moment in UTC.',
+    source:
+      'genesis:\n    let there be vigil = time of our lord("2026-12-24T23:00:00Z")\n    let there be christmas = time of our lord("2026-12-25T00:00:00Z")\n\n    if vigil < christmas:\n        praise "The hour has not yet come"\n    amen\n\n    praise "Seconds until Christmas"\n    praise christmas - vigil\n    praise christmas\namen\n',
+    output: [
+      'The hour has not yet come',
+      'Seconds until Christmas',
+      '3600',
+      '2026-12-25T00:00:00Z',
+    ],
     next: null,
   },
   custom: {
