@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+  <title id="title">Scripture</title>
+  <desc id="desc">An open book formed by a pair of curly braces, in dark ink and gold.</desc>
+  <path fill="#24211c" d="M43 24C36 20 31 18 26 18C18 18 18 24 18 31V35C18 41 15 44 9 44V52C15 52 18 55 18 61V65C18 76 23 78 30 80L43 85V75L32 71C28 70 28 67 28 62V59C28 53 25 50 21 48C25 46 28 43 28 37V32C28 27 29 27 33 28L43 32Z"/>
+  <path fill="#b58a16" d="M53 24C60 20 65 18 70 18C78 18 78 24 78 31V35C78 41 81 44 87 44V52C81 52 78 55 78 61V65C78 76 73 78 66 80L53 85V75L64 71C68 70 68 67 68 62V59C68 53 71 50 75 48C71 46 68 43 68 37V32C68 27 67 27 63 28L53 32Z"/>
+</svg>
