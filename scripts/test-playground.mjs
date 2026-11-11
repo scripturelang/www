@@ -14,12 +14,22 @@ function mount({
   mobile = false,
   storageFails = false,
 } = {}) {
+  const metrics = { storageWrites: 0, gutterWrites: 0 };
+  const documentHandlers = {};
+  const windowHandlers = {};
   const elements = new Map();
   const element = (id) => {
     if (!elements.has(id))
       elements.set(id, {
         value: '',
-        textContent: '',
+        _textContent: '',
+        get textContent() {
+          return this._textContent;
+        },
+        set textContent(value) {
+          this._textContent = value;
+          if (id === 'line-numbers') metrics.gutterWrites++;
+        },
         hidden: false,
         disabled: false,
         open: false,
@@ -56,7 +66,21 @@ function mount({
     return elements.get(id);
   };
   const workers = [];
-  let timeoutCallback;
+  const timers = new Map();
+  let now = 0;
+  let timerId = 0;
+  function advance(milliseconds) {
+    const target = now + milliseconds;
+    while (true) {
+      const next = [...timers].sort((a, b) => a[1].at - b[1].at)[0];
+      if (!next || next[1].at > target) break;
+      const [id, timer] = next;
+      now = timer.at;
+      timers.delete(id);
+      timer.callback();
+    }
+    now = target;
+  }
   class Worker {
     constructor(url, options) {
       assert.equal(url, './worker.js');
@@ -77,6 +101,15 @@ function mount({
       getElementById: element,
       querySelector: element,
       body: { classList: { add() {} } },
+      visibilityState: 'visible',
+      addEventListener(name, callback) {
+        documentHandlers[name] = callback;
+      },
+    },
+    window: {
+      addEventListener(name, callback) {
+        windowHandlers[name] = callback;
+      },
     },
     localStorage: {
       getItem: (key) => {
@@ -84,16 +117,17 @@ function mount({
         return storage.get(key) ?? null;
       },
       setItem: (key, value) => {
+        metrics.storageWrites++;
         if (storageFails) throw Error('full');
         storage.set(key, value);
       },
     },
     matchMedia: () => ({ matches: mobile }),
-    setTimeout: (callback) => {
-      timeoutCallback = callback;
-      return 1;
+    setTimeout: (callback, delay) => {
+      timers.set(++timerId, { callback, at: now + delay });
+      return timerId;
     },
-    clearTimeout() {},
+    clearTimeout: (id) => timers.delete(id),
   };
   vm.runInNewContext(controller, context);
   const click = (id) => element(id).handlers.click();
@@ -112,7 +146,18 @@ function mount({
     edit,
     load,
     storage,
-    timeout: () => timeoutCallback(),
+    metrics,
+    advance,
+    timeout: () => advance(10000),
+    blur: () => element('source').handlers.blur(),
+    pagehide: () => windowHandlers.pagehide(),
+    visibility: (state) => {
+      context.document.visibilityState = state;
+      documentHandlers.visibilitychange();
+    },
+    setStorageFails: (value) => {
+      storageFails = value;
+    },
   };
 }
 
@@ -275,6 +320,145 @@ assert.equal(
   prevented,
   false,
   'Shift+Tab must retain native backwards navigation',
+);
+
+// Typing coalesces storage writes and leaves unchanged line numbers alone.
+const typing = mount();
+const initialWrites = { ...typing.metrics };
+for (let i = 0; i < 100; i++)
+  typing.edit(lessons.hello.source + 'a'.repeat(i + 1));
+assert.deepEqual(typing.metrics, initialWrites);
+assert.equal(typing.element('draft-status').textContent, 'Saving…');
+typing.advance(299);
+assert.equal(typing.metrics.storageWrites, initialWrites.storageWrites);
+typing.edit(lessons.hello.source + 'latest');
+typing.advance(299);
+assert.equal(typing.metrics.storageWrites, initialWrites.storageWrites);
+typing.advance(1);
+assert.equal(typing.metrics.storageWrites, initialWrites.storageWrites + 1);
+assert.equal(
+  JSON.parse(typing.storage.get(storageKey)).drafts.hello,
+  lessons.hello.source + 'latest',
+);
+assert.equal(
+  typing.element('draft-status').textContent,
+  'Edited · saved locally',
+);
+typing.advance(2000);
+assert.equal(
+  typing.metrics.storageWrites,
+  initialWrites.storageWrites + 1,
+  'successful saves cancel the deadline',
+);
+typing.edit('first\nsecond\n');
+assert.equal(typing.element('line-numbers').textContent, '1\n2\n3');
+assert.equal(typing.metrics.gutterWrites, initialWrites.gutterWrites + 1);
+typing.edit('first');
+assert.equal(typing.element('line-numbers').textContent, '1');
+typing.edit('');
+assert.equal(typing.element('line-numbers').textContent, '1');
+assert.equal(typing.metrics.gutterWrites, initialWrites.gutterWrites + 2);
+typing.element('source').scrollTop = 52;
+typing.element('source').handlers.scroll();
+assert.equal(typing.element('line-numbers').scrollTop, 52);
+assert.equal(typing.metrics.gutterWrites, initialWrites.gutterWrites + 2);
+
+const continuous = mount();
+for (let i = 0; i < 20; i++) {
+  continuous.edit(`draft ${i}`);
+  continuous.advance(100);
+}
+assert.equal(
+  continuous.metrics.storageWrites,
+  2,
+  'continuous input saves at the maximum wait',
+);
+assert.equal(
+  JSON.parse(continuous.storage.get(storageKey)).drafts.hello,
+  'draft 19',
+);
+continuous.edit('after deadline');
+continuous.advance(300);
+assert.equal(continuous.metrics.storageWrites, 3);
+
+// Leaving the editor or page flushes pending changes exactly once.
+for (const flush of [
+  (ui) => ui.blur(),
+  (ui) => ui.visibility('hidden'),
+  (ui) => ui.pagehide(),
+]) {
+  const leaving = mount();
+  leaving.edit('pending draft');
+  leaving.visibility('visible');
+  assert.equal(leaving.metrics.storageWrites, 1);
+  flush(leaving);
+  assert.equal(leaving.metrics.storageWrites, 2);
+  assert.equal(
+    mount({ storage: leaving.storage }).element('source').value,
+    'pending draft',
+  );
+  flush(leaving);
+  leaving.advance(2000);
+  assert.equal(leaving.metrics.storageWrites, 2);
+}
+
+// Immediate actions save the correct lesson, undo state, and execution source.
+const switching = mount();
+switching.edit('hello edit');
+switching.load('values');
+switching.edit('values edit');
+switching.click('undo-load');
+switching.advance(2000);
+const switched = JSON.parse(switching.storage.get(storageKey));
+assert.equal(switched.drafts.hello, 'hello edit');
+assert.equal(switched.drafts.values, 'values edit');
+assert.equal(switched.activeLesson, 'hello');
+assert.equal(switched.previous, null);
+switching.edit('reset me');
+switching.click('reset');
+assert.equal(
+  JSON.parse(switching.storage.get(storageKey)).previous.source,
+  'reset me',
+);
+switching.click('undo-load');
+assert.equal(switching.element('source').value, 'reset me');
+switching.edit('run me');
+switching.click('run');
+assert.equal(
+  JSON.parse(switching.storage.get(storageKey)).drafts.hello,
+  'run me',
+);
+switching.edit('edited while running');
+switching.advance(300);
+assert.equal(
+  JSON.parse(switching.storage.get(storageKey)).drafts.hello,
+  'edited while running',
+);
+assert.equal(switching.workers[0].terminated, undefined);
+switching.advance(9700);
+assert.equal(
+  switching.workers[0].terminated,
+  true,
+  'draft timers must not cancel the execution timeout',
+);
+
+const failedSave = mount();
+failedSave.setStorageFails(true);
+failedSave.edit('recoverable');
+failedSave.advance(300);
+assert.equal(
+  failedSave.element('draft-status').textContent,
+  'Not saved in this browser',
+);
+failedSave.setStorageFails(false);
+failedSave.pagehide();
+assert.equal(
+  JSON.parse(failedSave.storage.get(storageKey)).drafts.hello,
+  'recoverable',
+);
+assert.equal(
+  failedSave.element('draft-status').textContent,
+  'Edited · saved locally',
 );
 
 // The worker must await the async Wasm report before parsing or posting it.

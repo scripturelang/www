@@ -2,6 +2,8 @@ import { lessons } from './lessons.js';
 
 const byId = (id) => document.getElementById(id);
 const source = byId('source');
+const lineNumbers = byId('line-numbers');
+const draftStatus = byId('draft-status');
 const output = byId('output');
 const error = byId('error');
 const placeholder = byId('placeholder');
@@ -13,6 +15,12 @@ const selector = byId('example');
 const storageKey = 'scripture-playground-v2';
 const legacyKey = 'scripture-playground-draft-v1';
 const drafts = Object.create(null);
+const draftDebounceDelay = 300;
+const draftDebounceMaxWait = 2000;
+let draftDebounceTimer = null;
+let draftDebounceDeadline = null;
+let draftDirty = false;
+let renderedLineCount = 0;
 let activeLesson = 'hello';
 let previous = null;
 let activeWorker = null;
@@ -29,13 +37,29 @@ function validSource(value) {
   return typeof value === 'string' && value.length <= 131072;
 }
 function updateLines() {
-  byId('line-numbers').textContent = Array.from(
-    { length: source.value.split('\n').length },
-    (_, i) => i + 1,
-  ).join('\n');
-  byId('line-numbers').scrollTop = source.scrollTop;
+  const text = source.value;
+  let lineCount = 1;
+  for (
+    let index = text.indexOf('\n');
+    index !== -1;
+    index = text.indexOf('\n', index + 1)
+  ) {
+    lineCount++;
+  }
+  if (lineCount !== renderedLineCount) {
+    lineNumbers.textContent = Array.from(
+      { length: lineCount },
+      (_, i) => i + 1,
+    ).join('\n');
+    renderedLineCount = lineCount;
+  }
+  lineNumbers.scrollTop = source.scrollTop;
 }
 function saveDraft() {
+  clearTimeout(draftDebounceTimer);
+  clearTimeout(draftDebounceDeadline);
+  draftDebounceTimer = null;
+  draftDebounceDeadline = null;
   drafts[activeLesson] = source.value;
   try {
     localStorage.setItem(
@@ -43,15 +67,33 @@ function saveDraft() {
       JSON.stringify({ activeLesson, drafts, previous }),
     );
     storageAvailable = true;
+    draftDirty = false;
   } catch {
     storageAvailable = false;
+    draftDirty = true;
   }
   const edited = source.value !== lessons[activeLesson].source;
-  byId('draft-status').textContent = storageAvailable
+  draftStatus.textContent = storageAvailable
     ? edited
       ? 'Edited · saved locally'
       : 'Saved locally'
     : 'Not saved in this browser';
+}
+function flushDraft() {
+  if (draftDirty) saveDraft();
+}
+function debounceDraftSave() {
+  // Keep lesson switching and undo current without writing storage per keystroke.
+  drafts[activeLesson] = source.value;
+  draftDirty = true;
+  const message = storageAvailable ? 'Saving…' : 'Not saved in this browser';
+  if (draftStatus.textContent !== message) draftStatus.textContent = message;
+  clearTimeout(draftDebounceTimer);
+  draftDebounceTimer = setTimeout(flushDraft, draftDebounceDelay);
+  // Continuous typing still gets periodic recovery points.
+  if (draftDebounceDeadline === null) {
+    draftDebounceDeadline = setTimeout(flushDraft, draftDebounceMaxWait);
+  }
 }
 function setView(view, reveal = false) {
   byId('workspace').dataset.view = view;
@@ -319,7 +361,7 @@ stopButton.addEventListener('click', () => {
     'Execution stopped. Your code is still here. Edit it and run again.';
 });
 function onEdit() {
-  saveDraft();
+  debounceDraftSave();
   updateLines();
   source.removeAttribute('aria-invalid');
   byId('error-location').hidden = true;
@@ -328,8 +370,13 @@ function onEdit() {
     status.textContent = 'Edited since run';
 }
 source.addEventListener('input', onEdit);
+source.addEventListener('blur', flushDraft);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushDraft();
+});
+window.addEventListener('pagehide', flushDraft);
 source.addEventListener('scroll', () => {
-  byId('line-numbers').scrollTop = source.scrollTop;
+  lineNumbers.scrollTop = source.scrollTop;
 });
 source.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
